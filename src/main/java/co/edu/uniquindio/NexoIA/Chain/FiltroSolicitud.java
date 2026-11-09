@@ -1,8 +1,9 @@
 package co.edu.uniquindio.NexoIA.Chain;
 
+import co.edu.uniquindio.NexoIA.Model.Solicitud;
+
 public abstract class FiltroSolicitud {
     // Eslabon base: valida lo suyo y delega en el siguiente de la cadena.
-    public abstract class FiltroSolicitud {
         private co.edu.uniquindio.NexoIA.Chain.FiltroSolicitud siguiente;
 
         public void setSiguiente(co.edu.uniquindio.NexoIA.Chain.FiltroSolicitud siguiente) {
