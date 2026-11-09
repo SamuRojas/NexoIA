@@ -18,7 +18,7 @@ public class ObservadorFacturacion implements Observador {
         boolean finalizada = estado instanceof EstadoCompletada
                 || estado instanceof EstadoFallida
                 || estado instanceof EstadoCancelada;
-        if (!finalizada) {
+        if (!finalizada || tarea.getCostoAcumulado() <= 0) {
             return;
         }
         tarea.setFacturada(true);

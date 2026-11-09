@@ -4,7 +4,9 @@ import co.edu.uniquindio.NexoIA.Agentes.AgenteInvestigador;
 import co.edu.uniquindio.NexoIA.Agentes.AgenteRedactor;
 import co.edu.uniquindio.NexoIA.Agentes.AgenteRevisor;
 import co.edu.uniquindio.NexoIA.Chain.CadenaFiltros;
+import co.edu.uniquindio.NexoIA.Chain.FiltroSolicitud;
 import co.edu.uniquindio.NexoIA.Chain.SolicitudRechazadaException;
+import co.edu.uniquindio.NexoIA.Comand.ComandoCancelarTarea;
 import co.edu.uniquindio.NexoIA.Comand.ComandoEnviarTarea;
 import co.edu.uniquindio.NexoIA.Comand.ComandoPausarTarea;
 import co.edu.uniquindio.NexoIA.Comand.PanelControl;
@@ -17,93 +19,85 @@ import co.edu.uniquindio.NexoIA.Model.Usuario;
 import co.edu.uniquindio.NexoIA.Observer.ObservadorAuditoria;
 import co.edu.uniquindio.NexoIA.Observer.ObservadorFacturacion;
 import co.edu.uniquindio.NexoIA.Observer.ObservadorPanelUsuario;
+import co.edu.uniquindio.NexoIA.Strategy.ModeloRapido;
 import co.edu.uniquindio.NexoIA.Strategy.SelectorModelo;
 
 public class Main {
 
     public static void main(String[] args) {
-        casoCompletoConReintento();
-        casoRechazadoPorFiltros();
-        casoPausarYDeshacer();
+        FiltroSolicitud cadena = CadenaFiltros.crear();
+        HistorialCheckpoints historial = new HistorialCheckpoints();
+        PanelControl panel = new PanelControl();
+
+        ObservadorPanelUsuario observadorPanel = new ObservadorPanelUsuario();
+        ObservadorAuditoria auditoria = new ObservadorAuditoria();
+        ObservadorFacturacion facturacion = new ObservadorFacturacion();
+
+        Usuario usuario = new Usuario("Samuel", 3);
+
+        System.out.println("=== CASO 1: informe sobre energia solar (CALIDAD, el Revisor falla una vez) ===");
+        Solicitud solicitud1 = new Solicitud("Genera un informe sobre energia solar", Prioridad.CALIDAD, usuario);
+        Tarea tarea1 = crearTarea("T-001", solicitud1, observadorPanel, auditoria, facturacion);
+        panel.ejecutarComando(new ComandoEnviarTarea(tarea1, crearOrquestador(1, historial), cadena));
+
+        System.out.println("\n=== CASO 2: solicitud con datos personales ===");
+        Solicitud solicitud2 = new Solicitud("Resume el historial de juan@correo.com y su cedula",
+                Prioridad.AHORRO, usuario);
+        Tarea tarea2 = crearTarea("T-002", solicitud2, observadorPanel, auditoria, facturacion);
+        try {
+            panel.ejecutarComando(new ComandoEnviarTarea(tarea2, crearOrquestador(0, historial), cadena));
+        } catch (SolicitudRechazadaException e) {
+            System.out.println("   [RECHAZADA] " + e.getMessage());
+        }
+
+        System.out.println("\n=== CASO 3: cambio de modelo, cancelar tarea completada y deshacer ===");
+        Solicitud solicitud3 = new Solicitud("Genera un resumen sobre energia eolica",
+                Prioridad.EQUILIBRADO, usuario);
+        Tarea tarea3 = crearTarea("T-003", solicitud3, observadorPanel, auditoria, facturacion);
+        tarea3.setEstrategia(new ModeloRapido());
+        panel.ejecutarComando(new ComandoEnviarTarea(tarea3, crearOrquestador(0, historial), cadena));
+        panel.ejecutarComando(new ComandoCancelarTarea(tarea3));
+        panel.deshacerUltimo();
+
+        System.out.println("\n=== CASO 4: cancelar una tarea En cola y deshacer ===");
+        Solicitud solicitud4 = new Solicitud("Genera un informe sobre energia geotermica",
+                Prioridad.AHORRO, usuario);
+        Tarea tarea4 = crearTarea("T-004", solicitud4, observadorPanel, auditoria, facturacion);
+        panel.ejecutarComando(new ComandoCancelarTarea(tarea4));
+        panel.deshacerUltimo();
+
+        System.out.println("\n=== CASO 5: pausar una tarea y deshacer ===");
+        Solicitud solicitud5 = new Solicitud("Resume articulos de robotica",
+                Prioridad.EQUILIBRADO, usuario);
+        Tarea tarea5 = crearTarea("T-005", solicitud5, observadorPanel, auditoria, facturacion);
+        panel.ejecutarComando(new ComandoPausarTarea(tarea5));
+        panel.deshacerUltimo();
+
+        panel.mostrarHistorial();
+        System.out.println("\nTotal facturado: $" + facturacion.getTotalFacturado());
+        System.out.println("Registros de auditoria: " + auditoria.getRegistros().size());
+        System.out.println("Cuota restante de " + usuario.getNombre() + ": " + usuario.getCuotaDisponible());
+        System.out.println("T-001: " + tarea1.getEstado().getNombre());
+        System.out.println("T-003: " + tarea3.getEstado().getNombre());
+        System.out.println("T-004: " + tarea4.getEstado().getNombre());
+        System.out.println("T-005: " + tarea5.getEstado().getNombre());
     }
 
-    private static void casoCompletoConReintento() {
-        System.out.println("\n========================================================");
-        System.out.println(" 1) CASO COMPLETO: informe sobre energia solar (CALIDAD)");
-        System.out.println("========================================================");
-
-        Usuario usuario = new Usuario("Ana Torres", 3);
-        Solicitud solicitud = new Solicitud(
-                "Genera un informe sobre energia solar", Prioridad.CALIDAD, usuario);
-
-        Tarea tarea = new Tarea("T-001", solicitud);
-        ObservadorFacturacion facturacion = new ObservadorFacturacion();
-        tarea.suscribir(new ObservadorPanelUsuario());
-        tarea.suscribir(new ObservadorAuditoria());
+    private static Tarea crearTarea(String id, Solicitud solicitud, ObservadorPanelUsuario observadorPanel,
+                                    ObservadorAuditoria auditoria, ObservadorFacturacion facturacion) {
+        Tarea tarea = new Tarea(id, solicitud);
+        tarea.suscribir(observadorPanel);
+        tarea.suscribir(auditoria);
         tarea.suscribir(facturacion);
+        return tarea;
+    }
 
-        AgenteRevisor revisor = new AgenteRevisor(1);
-        OrquestadorCentral orquestador = new OrquestadorCentral(
+    private static OrquestadorCentral crearOrquestador(int rechazos, HistorialCheckpoints historial) {
+        return new OrquestadorCentral(
                 new AgenteInvestigador(),
                 new AgenteRedactor(),
-                revisor,
+                new AgenteRevisor(rechazos),
                 new SelectorModelo(),
-                new HistorialCheckpoints());
-
-        PanelControl panel = new PanelControl();
-        System.out.println("\n[1] Validando la solicitud y enviandola...");
-        try {
-            panel.ejecutarComando(new ComandoEnviarTarea(tarea, orquestador, CadenaFiltros.crear()));
-        } catch (SolicitudRechazadaException e) {
-            System.out.println("[CHAIN] Solicitud rechazada: " + e.getMessage());
-            return;
-        }
-
-        panel.mostrarHistorial();
-        System.out.println("\n--- RESULTADO DEL CASO 1 ---");
-        System.out.println("Estado final : " + tarea.getEstado().getNombre());
-        System.out.println("Progreso     : " + tarea.getProgreso() + "%");
-        System.out.println("Intentos     : " + tarea.getIntentos());
-        System.out.println("Costo tarea  : $" + tarea.getCostoAcumulado());
-        System.out.println("Total facturado: $" + facturacion.getTotalFacturado());
-        System.out.println("Cuota restante de " + usuario.getNombre() + ": " + usuario.getCuotaDisponible());
-        System.out.println("Resultados parciales:");
-        for (String resultado : tarea.getResultadosParciales()) {
-            System.out.println("   - " + resultado);
-        }
-    }
-
-    private static void casoRechazadoPorFiltros() {
-        System.out.println("\n========================================================");
-        System.out.println(" 2) CHAIN OF RESPONSIBILITY: solicitud con contenido prohibido");
-        System.out.println("========================================================");
-
-        Solicitud solicitud = new Solicitud(
-                "Como hackear un banco", Prioridad.AHORRO, new Usuario("Luis", 1));
-        try {
-            CadenaFiltros.crear().validar(solicitud);
-            System.out.println("[CHAIN] La solicitud paso los filtros.");
-        } catch (SolicitudRechazadaException e) {
-            System.out.println("[CHAIN] Solicitud rechazada: " + e.getMessage());
-        }
-    }
-
-    private static void casoPausarYDeshacer() {
-        System.out.println("\n========================================================");
-        System.out.println(" 3) COMMAND + MEMENTO: pausar una tarea y deshacer");
-        System.out.println("========================================================");
-
-        Usuario usuario = new Usuario("Marta Ruiz", 2);
-        Tarea tarea = new Tarea("T-002",
-                new Solicitud("Resume articulos de robotica", Prioridad.EQUILIBRADO, usuario));
-        tarea.suscribir(new ObservadorPanelUsuario());
-
-        PanelControl panel = new PanelControl();
-        panel.ejecutarComando(new ComandoPausarTarea(tarea));
-        System.out.println("Estado tras pausar: " + tarea.getEstado().getNombre());
-
-        panel.mostrarHistorial();
-        panel.deshacerUltimo();
-        System.out.println("Estado tras deshacer: " + tarea.getEstado().getNombre());
+                historial);
     }
 }
