@@ -40,7 +40,6 @@ public abstract class AgenteIA {
         mediador.notificar(new EventoAgente(definirEvento(resultado), tarea, resultado));
     }
 
-    // Usa la Strategy de la tarea y acumula el costo del modelo
     protected String consultarModelo(Tarea tarea, String prompt) {
         tarea.acumularCosto(tarea.getEstrategia().getCostoPorUso());
         return tarea.getEstrategia().ejecutar(prompt);

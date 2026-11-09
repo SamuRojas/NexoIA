@@ -1,18 +1,23 @@
 package co.edu.uniquindio.NexoIA.Memento;
 
-// Cuidador: guarda los puntos de control sin conocer su contenido.
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Stack;
+
 public class HistorialCheckpoints {
-    private final Stack<PuntoControl> puntos = new Stack<>();
+    private final Map<String, Stack<PuntoControl>> puntos = new HashMap<>();
 
-    public void guardar(PuntoControl punto) {
-        puntos.push(punto);
+    public void guardar(String tareaId, PuntoControl punto) {
+        puntos.computeIfAbsent(tareaId, id -> new Stack<>()).push(punto);
     }
 
-    public PuntoControl ultimo() {
-        return puntos.isEmpty() ? null : puntos.peek();
+    public PuntoControl ultimo(String tareaId) {
+        Stack<PuntoControl> pila = puntos.get(tareaId);
+        return pila == null || pila.isEmpty() ? null : pila.peek();
     }
 
-    public int cantidad() {
-        return puntos.size();
+    public int cantidad(String tareaId) {
+        Stack<PuntoControl> pila = puntos.get(tareaId);
+        return pila == null ? 0 : pila.size();
     }
 }

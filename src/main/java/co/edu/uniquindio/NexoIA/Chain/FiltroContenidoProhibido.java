@@ -5,7 +5,7 @@ import co.edu.uniquindio.NexoIA.Model.Solicitud;
 import java.util.Arrays;
 import java.util.List;
 
-public class FiltroContenidoProhibido {
+public class FiltroContenidoProhibido extends FiltroSolicitud {
 
     private static final List<String> PALABRAS_PROHIBIDAS = Arrays.asList("bomba", "hackear", "malware");
 

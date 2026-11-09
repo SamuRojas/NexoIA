@@ -5,7 +5,6 @@ import co.edu.uniquindio.NexoIA.State.EstadoTarea;
 import java.util.ArrayList;
 import java.util.List;
 
-// Memento: foto inmutable del estado de la tarea en una etapa.
 public class PuntoControl {
     private final String etapa;
     private final EstadoTarea estado;

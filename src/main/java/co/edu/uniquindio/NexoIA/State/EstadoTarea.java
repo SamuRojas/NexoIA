@@ -11,5 +11,7 @@ public interface EstadoTarea {
 
     void reintentar(Tarea tarea);
 
+    void pausar(Tarea tarea);
+
     String getNombre();
 }

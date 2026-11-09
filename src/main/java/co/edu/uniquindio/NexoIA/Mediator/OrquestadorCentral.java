@@ -7,7 +7,6 @@ import co.edu.uniquindio.NexoIA.Memento.HistorialCheckpoints;
 import co.edu.uniquindio.NexoIA.Model.Tarea;
 import co.edu.uniquindio.NexoIA.Strategy.SelectorModelo;
 
-// Mediador concreto: los agentes no se conocen, solo le avisan a el.
 public class OrquestadorCentral implements MediadorOrquestador {
     private static final int MAX_INTENTOS = 2;
 
@@ -25,7 +24,6 @@ public class OrquestadorCentral implements MediadorOrquestador {
         this.selector = selector;
         this.historial = historial;
 
-        // Inyectamos el mediador en cada agente
         this.investigador.setMediador(this);
         this.redactor.setMediador(this);
         this.revisor.setMediador(this);
@@ -34,7 +32,7 @@ public class OrquestadorCentral implements MediadorOrquestador {
     @Override
     public void iniciarFlujo(Tarea tarea) {
         System.out.println("\n[Orquestador] Iniciando flujo de " + tarea.getId());
-        // Strategy: se elige el modelo segun la prioridad (si no se fijo uno antes)
+
         if (tarea.getEstrategia() == null) {
             tarea.setEstrategia(selector.seleccionar(tarea.getSolicitud().getPrioridad()));
         }
@@ -74,20 +72,21 @@ public class OrquestadorCentral implements MediadorOrquestador {
     }
 
     private void manejarRechazo(Tarea tarea, String motivo) {
-        tarea.fallar(motivo);
         tarea.incrementarIntentos();
         if (tarea.getIntentos() >= MAX_INTENTOS) {
+            tarea.fallar(motivo);
             System.out.println("[Orquestador] Maximo de intentos alcanzado. La tarea queda Fallida.");
             return;
         }
-        // Memento: volvemos al ultimo checkpoint en lugar de empezar de cero
-        tarea.restaurar(historial.ultimo());
-        System.out.println("[Orquestador] Reintentando desde el checkpoint (intento " + (tarea.getIntentos() + 1) + ")");
-        redactor.procesar(tarea);
+        tarea.restaurar(historial.ultimo(tarea.getId()));
+        System.out.println("[Orquestador] Reintentando la revision desde el checkpoint (intento "
+                + (tarea.getIntentos() + 1) + ")");
+        tarea.avanzar();
+        revisor.procesar(tarea);
     }
 
     private void guardarCheckpoint(Tarea tarea, String etapa) {
-        historial.guardar(tarea.crearPuntoControl(etapa));
+        historial.guardar(tarea.getId(), tarea.crearPuntoControl(etapa));
         System.out.println("[Orquestador] Checkpoint guardado: " + etapa);
     }
 }

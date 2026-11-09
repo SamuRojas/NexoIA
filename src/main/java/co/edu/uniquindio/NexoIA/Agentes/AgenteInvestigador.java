@@ -3,7 +3,6 @@ package co.edu.uniquindio.NexoIA.Agentes;
 import co.edu.uniquindio.NexoIA.Mediator.TipoEventoAgente;
 import co.edu.uniquindio.NexoIA.Model.Tarea;
 
-
 public class AgenteInvestigador extends AgenteIA{
     public AgenteInvestigador() {
         super("Investigador");

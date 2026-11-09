@@ -13,7 +13,7 @@ public class ComandoCancelarTarea implements Comando{
 
     @Override
     public void ejecutar() {
-        // Memento: guardamos el estado previo para poder deshacer
+
         estadoAnterior = tarea.crearPuntoControl("antes de cancelar");
         tarea.cancelar();
     }

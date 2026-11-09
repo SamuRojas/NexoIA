@@ -2,7 +2,6 @@ package co.edu.uniquindio.NexoIA.Comand;
 
 import java.util.Stack;
 
-// Invocador: ejecuta comandos y guarda el historial para deshacer.
 public class PanelControl {
     private final Stack<Comando> historial = new Stack<>();
 

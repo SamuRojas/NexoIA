@@ -4,29 +4,26 @@ import co.edu.uniquindio.NexoIA.Mediator.TipoEventoAgente;
 import co.edu.uniquindio.NexoIA.Model.Tarea;
 
 public class AgenteRevisor extends AgenteIA {
-    private int rechazosSimulados;
-    private boolean aprobado;
+    private final int rechazosAntesDeAprobar;
 
-    // rechazosSimulados: cuantas veces rechaza antes de aprobar (para simular la falla)
-    public AgenteRevisor(int rechazosSimulados) {
+    public AgenteRevisor(int rechazosAntesDeAprobar) {
         super("Revisor");
-        this.rechazosSimulados = rechazosSimulados;
+        this.rechazosAntesDeAprobar = rechazosAntesDeAprobar;
     }
 
     @Override
     protected String ejecutar(Tarea tarea, String contexto) {
         consultarModelo(tarea, "revisar: " + contexto);
-        if (rechazosSimulados > 0) {
-            rechazosSimulados--;
-            aprobado = false;
+        if (tarea.getIntentos() < rechazosAntesDeAprobar) {
             return "RECHAZADO: faltan fuentes y hay inconsistencias";
         }
-        aprobado = true;
         return "APROBADO: el informe cumple los criterios";
     }
 
     @Override
     protected TipoEventoAgente definirEvento(String resultado) {
-        return aprobado ? TipoEventoAgente.REVISION_APROBADA : TipoEventoAgente.REVISION_RECHAZADA;
+        return resultado.startsWith("APROBADO")
+                ? TipoEventoAgente.REVISION_APROBADA
+                : TipoEventoAgente.REVISION_RECHAZADA;
     }
 }

@@ -10,10 +10,6 @@ import co.edu.uniquindio.NexoIA.Strategy.EstrategiaModelo;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Entidad central: es el Contexto de State, el Sujeto de Observer,
- * el Originador de Memento y el Contexto de Strategy.
- */
 public class Tarea implements Sujeto {
     private final String id;
     private final Solicitud solicitud;
@@ -38,7 +34,6 @@ public class Tarea implements Sujeto {
         this.observadores = new ArrayList<>();
     }
 
-    // ---------- State: delegacion al estado actual ----------
     public void avanzar() {
         estado.avanzar(this);
     }
@@ -55,12 +50,15 @@ public class Tarea implements Sujeto {
         estado.reintentar(this);
     }
 
+    public void pausar() {
+        estado.pausar(this);
+    }
+
     public void setEstado(EstadoTarea nuevoEstado) {
         this.estado = nuevoEstado;
         notificarObservadores("Estado -> " + nuevoEstado.getNombre());
     }
 
-    // ---------- Memento (Originador) ----------
     public PuntoControl crearPuntoControl(String etapa) {
         return new PuntoControl(etapa, estado, progreso, resultadosParciales);
     }
@@ -69,12 +67,11 @@ public class Tarea implements Sujeto {
         this.estado = punto.getEstado();
         this.progreso = punto.getProgreso();
         this.resultadosParciales = new ArrayList<>(punto.getResultadosParciales());
-        // el costo NO se restaura: el modelo ya fue consumido y se cobra
+
         notificarObservadores("Restaurada al checkpoint '" + punto.getEtapa()
                 + "' (estado " + estado.getNombre() + ", progreso " + progreso + "%)");
     }
 
-    // ---------- Observer (Sujeto) ----------
     @Override
     public void suscribir(Observador observador) {
         if (!observadores.contains(observador)) {
@@ -94,7 +91,6 @@ public class Tarea implements Sujeto {
         }
     }
 
-    // ---------- Logica propia ----------
     public void agregarResultado(String resultado) {
         resultadosParciales.add(resultado);
     }
@@ -138,6 +134,7 @@ public class Tarea implements Sujeto {
 
     public void setProgreso(int progreso) {
         this.progreso = progreso;
+        notificarObservadores("Progreso -> " + progreso + "%");
     }
 
     public int getIntentos() {

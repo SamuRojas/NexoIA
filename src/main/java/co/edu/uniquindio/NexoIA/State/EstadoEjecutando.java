@@ -1,4 +1,37 @@
 package co.edu.uniquindio.NexoIA.State;
 
-public class EstadoEjecutando {
+import co.edu.uniquindio.NexoIA.Model.Tarea;
+
+public class EstadoEjecutando implements EstadoTarea {
+
+    @Override
+    public void avanzar(Tarea tarea) {
+        tarea.setEstado(new EstadoRevisando());
+    }
+
+    @Override
+    public void fallar(Tarea tarea, String motivo) {
+        System.out.println("   [STATE] La tarea fallo al ejecutar: " + motivo);
+        tarea.setEstado(new EstadoFallida());
+    }
+
+    @Override
+    public void cancelar(Tarea tarea) {
+        tarea.setEstado(new EstadoCancelada());
+    }
+
+    @Override
+    public void reintentar(Tarea tarea) {
+        tarea.setEstado(new EstadoEnCola());
+    }
+
+    @Override
+    public void pausar(Tarea tarea) {
+        tarea.setEstado(new EstadoPausada());
+    }
+
+    @Override
+    public String getNombre() {
+        return "Ejecutando";
+    }
 }

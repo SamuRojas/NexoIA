@@ -3,6 +3,7 @@ package co.edu.uniquindio.NexoIA.Comand;
 import co.edu.uniquindio.NexoIA.Mediator.MediadorOrquestador;
 import co.edu.uniquindio.NexoIA.Memento.PuntoControl;
 import co.edu.uniquindio.NexoIA.Model.Tarea;
+import co.edu.uniquindio.NexoIA.State.EstadoEnCola;
 
 public class ComandoReintentarTarea implements Comando {
     private final Tarea tarea;
@@ -18,7 +19,7 @@ public class ComandoReintentarTarea implements Comando {
     public void ejecutar() {
         estadoAnterior = tarea.crearPuntoControl("antes de reintentar");
         tarea.reintentar();
-        if (tarea.getEstado().getNombre().equals("En cola")) {
+        if (tarea.getEstado() instanceof EstadoEnCola) {
             orquestador.iniciarFlujo(tarea);
         }
     }
